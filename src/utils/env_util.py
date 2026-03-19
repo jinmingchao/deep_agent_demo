@@ -1,0 +1,50 @@
+import os
+
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
+BAILIAN_BASE_URL = os.getenv("BAILIAN_BASE_URL")
+BAILIAN_API_KEY = os.getenv("BAILIAN_API_KEY")
+
+XIAOAI_BASE_URL = os.getenv("XIAOAI_BASE_URL")
+XIAOAI_API_KEY = os.getenv("XIAOAI_API_KEY")
+
+HUAWEIYUN_API_KEY = os.getenv("HUAWEIYUN_API_KEY")
+HUAWEIYUN_BASE_URL = os.getenv("HUAWEIYUN_BASE_URL")
+
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY")
+ZHIPU_API_BASE_URL=  os.getenv("ZHIPU_API_BASE_URL")
+
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL")
+
+# postgresql
+POSTGRESQL_DB_URI=os.getenv("POSTGRESQL_DB_URI")
+
+# mysql
+# home
+# YCYT_DATABASE_HOST = "192.168.239.13"
+# YCYT_DATABASE_PORT = 3306
+# YCYT_DATABASE_NAME = "root"
+# YCYT_DATABASE_PASSWORD = "rootroot"
+# YCYT_DATABASE_CTR_DATABASE = "rds_ycyt_ctr"
+# YCYT_DATABASE_PAY_DATABASE = "rds_ycyt_pay"
+# YCYT_DATABASE_PSC_DATABASE = "rds_ycyt_psc"
+
+# home laptop
+YCYT_DATABASE_HOST = "127.0.0.1"
+YCYT_DATABASE_PORT = 3306
+YCYT_DATABASE_NAME = "root"
+YCYT_DATABASE_PASSWORD = "rootroot"
+YCYT_DATABASE_CTR_DATABASE = "rds_ycyt_ctr"
+YCYT_DATABASE_PAY_DATABASE = "rds_ycyt_pay"
+YCYT_DATABASE_PSC_DATABASE = "rds_ycyt_psc"
+
+# work
+# YCYT_DATABASE_HOST = "127.0.0.1"
+# YCYT_DATABASE_PORT = 3306
+# YCYT_DATABASE_NAME = "root"
+# YCYT_DATABASE_PASSWORD = "root"
+# YCYT_DATABASE_CTR_DATABASE = "rds_ycyt_ctr"
+# YCYT_DATABASE_PAY_DATABASE = "rds_ycyt_pay"
