@@ -3,7 +3,7 @@
   python -m agent_skill_demo.main
 
 启动后在控制台用 input() 逐行输入问题，与智能体多轮对话（含 arithmetic / legal-knowledge /
-mysql-ycyt 三 Skill）。可选参数：--dump-skills（启动时打印 Skill 元数据 JSON）。
+mysql-ycyt / zhangxuefeng-skill 四 Skill）。可选参数：--dump-skills（启动时打印 Skill 元数据 JSON）。
 """
 
 from __future__ import annotations
@@ -17,8 +17,10 @@ from pathlib import Path
 import yaml
 from langgraph.checkpoint.memory import MemorySaver
 
-# 与 skills/demo 下三个 SKILL.md 的 name 字段一致
-EXPECTED_SKILL_NAMES: frozenset[str] = frozenset({"arithmetic", "legal-knowledge", "mysql-ycyt"})
+# 与 skills/demo 下各 SKILL.md 的 name 字段一致
+EXPECTED_SKILL_NAMES: frozenset[str] = frozenset(
+    {"arithmetic", "legal-knowledge", "mysql-ycyt", "zhangxuefeng-skill"}
+)
 
 
 def _ensure_repo_root() -> Path:
@@ -89,7 +91,7 @@ def _print_skills_schema(skills: list[dict]) -> None:
     print("[DeepAgent Skill 元数据]", json.dumps(skills, ensure_ascii=False, indent=2))
 
 
-def _validate_three_skills(skills: list[dict]) -> None:
+def _validate_expected_skills(skills: list[dict]) -> None:
     names = {s.get("name") for s in skills if isinstance(s, dict)}
     missing = EXPECTED_SKILL_NAMES - names
     extra = names - EXPECTED_SKILL_NAMES - {""}
@@ -102,7 +104,7 @@ def _validate_three_skills(skills: list[dict]) -> None:
 def _print_skill_banner(skills: list[dict]) -> None:
     print()
     print("=" * 60)
-    print("  Deep Agent · 三 Skill 演示（arithmetic / legal-knowledge / mysql-ycyt）")
+    print("  Deep Agent · 四 Skill 演示（arithmetic / legal-knowledge / mysql-ycyt / zhangxuefeng-skill）")
     print("=" * 60)
     for s in skills:
         if not isinstance(s, dict):
@@ -139,8 +141,8 @@ def _last_assistant_text(messages: list) -> str:
     return ""
 
 
-def build_three_skill_demo_agent():
-    """创建已注册三个业务 Skill 与对应工具的 Deep Agent（含会话记忆，供控制台多轮使用）。"""
+def build_skill_demo_agent():
+    """创建已注册四个业务 Skill（含 zhangxuefeng-skill）与对应工具的 Deep Agent（含会话记忆）。"""
     from agent_skill_demo.agent import build_agent
     from agent_skill_demo.tools import SKILL_TOOLS
 
@@ -202,7 +204,7 @@ def main() -> None:
     _ensure_repo_root()
 
     parser = argparse.ArgumentParser(
-        description="Deep Agent：集成 arithmetic、legal-knowledge、mysql-ycyt 三 Skill；启动后在控制台输入问题交互",
+        description="Deep Agent：集成 arithmetic、legal-knowledge、mysql-ycyt、zhangxuefeng-skill 四 Skill；启动后在控制台输入问题交互",
     )
     parser.add_argument(
         "--dump-skills",
@@ -212,9 +214,9 @@ def main() -> None:
     args = parser.parse_args()
 
     skills_meta = _collect_skills_meta()
-    _validate_three_skills(skills_meta)
+    _validate_expected_skills(skills_meta)
 
-    graph = build_three_skill_demo_agent()
+    graph = build_skill_demo_agent()
     _print_registered_tools(graph)
 
     if args.dump_skills:

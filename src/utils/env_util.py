@@ -1,8 +1,13 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(override=True)
+# 仓库根目录（src/utils/env_util.py → parents[2]）
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+# 无论从哪个工作目录启动，都加载项目根与 src 下的 .env（后者同名键可覆盖前者）
+load_dotenv(_REPO_ROOT / ".env", override=True)
+load_dotenv(_REPO_ROOT / "src" / ".env", override=True)
 
 BAILIAN_BASE_URL = os.getenv("BAILIAN_BASE_URL")
 BAILIAN_API_KEY = os.getenv("BAILIAN_API_KEY")
@@ -22,29 +27,11 @@ DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL")
 # postgresql
 POSTGRESQL_DB_URI=os.getenv("POSTGRESQL_DB_URI")
 
-# mysql
-# home
-# YCYT_DATABASE_HOST = "192.168.239.13"
-# YCYT_DATABASE_PORT = 3306
-# YCYT_DATABASE_NAME = "root"
-# YCYT_DATABASE_PASSWORD = "rootroot"
-# YCYT_DATABASE_CTR_DATABASE = "rds_ycyt_ctr"
-# YCYT_DATABASE_PAY_DATABASE = "rds_ycyt_pay"
-# YCYT_DATABASE_PSC_DATABASE = "rds_ycyt_psc"
-
-# home laptop
-YCYT_DATABASE_HOST = "127.0.0.1"
-YCYT_DATABASE_PORT = 3306
-YCYT_DATABASE_NAME = "root"
-YCYT_DATABASE_PASSWORD = "rootroot"
-YCYT_DATABASE_CTR_DATABASE = "rds_ycyt_ctr"
-YCYT_DATABASE_PAY_DATABASE = "rds_ycyt_pay"
-YCYT_DATABASE_PSC_DATABASE = "rds_ycyt_psc"
-
-# work
-# YCYT_DATABASE_HOST = "127.0.0.1"
-# YCYT_DATABASE_PORT = 3306
-# YCYT_DATABASE_NAME = "root"
-# YCYT_DATABASE_PASSWORD = "root"
-# YCYT_DATABASE_CTR_DATABASE = "rds_ycyt_ctr"
-# YCYT_DATABASE_PAY_DATABASE = "rds_ycyt_pay"
+# mysql（YCYT）— 与 agent_skill_demo.tools.mysql_ycyt_query / ycyt_database 共用
+# 优先使用环境变量或上述 .env；未设置时沿用原「work」本地默认值
+YCYT_DATABASE_HOST = os.getenv("YCYT_DATABASE_HOST", "127.0.0.1")
+YCYT_DATABASE_PORT = int(os.getenv("YCYT_DATABASE_PORT", "3306"))
+YCYT_DATABASE_NAME = os.getenv("YCYT_DATABASE_NAME", "root")
+YCYT_DATABASE_PASSWORD = os.getenv("YCYT_DATABASE_PASSWORD", "root")
+YCYT_DATABASE_CTR_DATABASE = os.getenv("YCYT_DATABASE_CTR_DATABASE", "rds_ycyt_ctr")
+YCYT_DATABASE_PAY_DATABASE = os.getenv("YCYT_DATABASE_PAY_DATABASE", "rds_ycyt_pay")
