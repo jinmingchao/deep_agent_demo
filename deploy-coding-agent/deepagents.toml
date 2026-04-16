@@ -1,0 +1,8 @@
+[agent]
+name = "deepagents-deploy-coding-agent"
+model = "deepseek:deepseek-chat"
+
+[sandbox]
+provider = "langsmith"
+template = "coding-agent"
+image = "python:3.12"
