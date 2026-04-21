@@ -51,3 +51,4 @@ Follow this phased workflow for every task:
 For complex tasks, delegate to subagents:
 - Use `task(subagent_type="researcher")` for researching APIs, docs, or patterns
 - Use `task(subagent_type="general-purpose")` for independent subtasks
+- **`jmc-test`**: registered in the runtime for harness / parity checks only. **Never** call `task(subagent_type="jmc-test")` for normal tasks — use `researcher` or `general-purpose` instead.

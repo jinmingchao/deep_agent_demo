@@ -86,6 +86,18 @@ _RESEARCHER_SUBAGENT = {
     ),
 }
 
+# 与 AGENTS.md「Subagents」中 jmc-test 说明对齐：仅注册供测试/对齐用，主智能体不得委派任务给它
+_JMC_TEST_SUBAGENT = {
+    "name": "jmc-test",
+    "description": (
+        "仅用于测试注册的占位 subagent。请勿将任何实际任务委派给本代理；请改用 "
+        "`researcher` 或 `general-purpose`。"
+    ),
+    "system_prompt": (
+        "仅占位用。若被误调用，请用一行简短回复说明 jmc-test 不应用于常规模型任务。"
+    ),
+}
+
 def _build_system_prompt() -> str:
     lint = _DEPLOY_ROOT / "skills" / "code-review" / "lint_check.py"
     extra = (
@@ -182,7 +194,7 @@ def build_local_agent():
         system_prompt=_build_system_prompt(),
         memory=AGENT_MEMORY_PATHS,
         skills=["/skills/"],
-        subagents=[_RESEARCHER_SUBAGENT],
+        subagents=[_RESEARCHER_SUBAGENT, _JMC_TEST_SUBAGENT],
         backend=_backend_factory(),
         name="deepagents-deploy-coding-agent-local",
         checkpointer=MemorySaver(),
