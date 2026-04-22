@@ -24,7 +24,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from deepagents import create_deep_agent
 from deepagents.backends import CompositeBackend, LocalShellBackend
+from deepagents.middleware.subagents import _EXCLUDED_STATE_KEYS
 from langchain_deepseek import ChatDeepSeek
+from langchain.agents.middleware.types import wrap_tool_call
+from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
 
 _DEPLOY_ROOT = Path(__file__).resolve().parent
@@ -97,6 +100,72 @@ _JMC_TEST_SUBAGENT = {
         "仅占位用。若被误调用，请用一行简短回复说明 jmc-test 不应用于常规模型任务。"
     ),
 }
+
+
+def _debug_task_state_middleware():
+    """Log tool calls; for `task`, also log subagent state."""
+
+    @wrap_tool_call(name="DebugTaskStateMiddleware")
+    def _debug_task_state(request, handler):
+        tool_call = getattr(request, "tool_call", None) or {}
+        tool_name = tool_call.get("name", "<missing tool name>")
+        args = tool_call.get("args", {}) or {}
+
+        # Print concrete arguments, but avoid dumping unbounded data.
+        # (Tool args can include large file contents / long prompts.)
+        def _pformat_limited(v, *, limit: int = 4000) -> str:
+            import pprint
+
+            try:
+                s = pprint.pformat(v, width=120, compact=True, sort_dicts=True)
+            except Exception:
+                try:
+                    s = repr(v)
+                except Exception:
+                    return "<unrepr-able>"
+            if len(s) <= limit:
+                return s
+            return s[: limit - 3] + "..."
+
+        if tool_name != "task":
+            print(
+                "[tool-call]",
+                tool_name,
+                "| args:",
+                _pformat_limited(args),
+                file=sys.stderr,
+            )
+            return handler(request)
+
+        # `task`: also print the subagent state right before invoking it.
+        subagent_type = args.get("subagent_type", "<missing subagent_type>") if isinstance(args, dict) else "<invalid args>"
+        description = args.get("description", "") if isinstance(args, dict) else ""
+
+        # Mirror deepagents.middleware.subagents._validate_and_prepare_state
+        parent_state = getattr(request, "state", {}) or {}
+        subagent_state = {k: v for k, v in parent_state.items() if k not in _EXCLUDED_STATE_KEYS}
+        subagent_state["messages"] = [HumanMessage(content=description)]
+
+        print(
+            "[tool-call] task",
+            "| subagent_type:",
+            subagent_type,
+            "| args:",
+            _pformat_limited(args),
+            file=sys.stderr,
+        )
+        print(
+            "[subagent-state] content:",
+            _pformat_limited(subagent_state),
+            file=sys.stderr,
+        )
+        if description:
+            print("[subagent-state] messages[0] content:", _pformat_limited(description, limit=4000), file=sys.stderr)
+
+        return handler(request)
+
+    return _debug_task_state
+
 
 def _build_system_prompt() -> str:
     lint = _DEPLOY_ROOT / "skills" / "code-review" / "lint_check.py"
@@ -195,6 +264,7 @@ def build_local_agent():
         memory=AGENT_MEMORY_PATHS,
         skills=["/skills/"],
         subagents=[_RESEARCHER_SUBAGENT, _JMC_TEST_SUBAGENT],
+        middleware=[_debug_task_state_middleware()],
         backend=_backend_factory(),
         name="deepagents-deploy-coding-agent-local",
         checkpointer=MemorySaver(),

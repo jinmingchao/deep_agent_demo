@@ -4,8 +4,14 @@ import time
 from typing import Any, Awaitable, Callable, TypeVar
 
 from langchain.agents.middleware import AgentMiddleware
-from langchain.agents.middleware.types import ExtendedModelResponse, ModelRequest, ModelResponse
+from langchain.agents.middleware.types import (
+    ExtendedModelResponse,
+    ModelRequest,
+    ModelResponse,
+    ToolCallRequest,
+)
 from langchain_core.messages import AIMessage
+from langchain_core.messages import ToolMessage
 from langgraph.runtime import Runtime
 
 StateT = TypeVar("StateT")
@@ -80,6 +86,44 @@ class FullHooksMiddleware(AgentMiddleware[StateT, ContextT, ResponseT]):
         resp = await handler(request)
         dt_ms = round((time.perf_counter() - t0) * 1000, 2)
         self._log("awrap_model_call.after", {"elapsed_ms": dt_ms})
+        return resp
+
+    def wrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], ToolMessage | Any],
+    ) -> ToolMessage | Any:
+        t0 = time.perf_counter()
+        tc = getattr(request, "tool_call", None) or {}
+        self._log(
+            "wrap_tool_call.before",
+            {"tool": tc.get("name"), "args": tc.get("args")},
+        )
+        resp = handler(request)
+        dt_ms = round((time.perf_counter() - t0) * 1000, 2)
+        self._log(
+            "wrap_tool_call.after",
+            {"elapsed_ms": dt_ms, "result_type": type(resp).__name__},
+        )
+        return resp
+
+    async def awrap_tool_call(
+        self,
+        request: ToolCallRequest,
+        handler: Callable[[ToolCallRequest], Awaitable[ToolMessage | Any]],
+    ) -> ToolMessage | Any:
+        t0 = time.perf_counter()
+        tc = getattr(request, "tool_call", None) or {}
+        self._log(
+            "awrap_tool_call.before",
+            {"tool": tc.get("name"), "args": tc.get("args")},
+        )
+        resp = await handler(request)
+        dt_ms = round((time.perf_counter() - t0) * 1000, 2)
+        self._log(
+            "awrap_tool_call.after",
+            {"elapsed_ms": dt_ms, "result_type": type(resp).__name__},
+        )
         return resp
 
     def after_agent(self, state: StateT, runtime: Runtime[ContextT]) -> dict[str, Any] | None:
