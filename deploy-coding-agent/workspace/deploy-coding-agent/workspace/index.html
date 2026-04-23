@@ -1,66 +1,111 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>计算器</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科学计算器</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="calculator">
-    <div class="calculator-title">✦ 计算器</div>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-calculator"></i> 科学计算器</h1>
+            <p class="subtitle">支持加减乘除、取余、平方、开方运算</p>
+        </header>
 
-    <!-- Display -->
-    <div class="display">
-      <div class="expression" id="expression">0</div>
-      <div class="result" id="result"></div>
+        <main class="calculator-container">
+            <div class="calculator">
+                <!-- 显示区域 -->
+                <div class="display">
+                    <div class="expression-display" id="expressionDisplay">
+                        <span class="expression-label">表达式:</span>
+                        <span id="expression">0</span>
+                    </div>
+                    <div class="result-display" id="resultDisplay">
+                        <span class="result-label">结果:</span>
+                        <span id="result">0</span>
+                    </div>
+                    <div class="history-display" id="historyDisplay">
+                        <span class="history-label">历史:</span>
+                        <div id="history"></div>
+                    </div>
+                </div>
+
+                <!-- 按钮区域 -->
+                <div class="buttons">
+                    <!-- 第一行：清除和高级功能 -->
+                    <button class="btn clear" onclick="clearAll()">C</button>
+                    <button class="btn clear" onclick="clearEntry()">CE</button>
+                    <button class="btn operator" onclick="appendOperation('^2')">x²</button>
+                    <button class="btn operator" onclick="appendOperation('√')">√</button>
+                    <button class="btn operator" onclick="appendOperation('%')">%</button>
+
+                    <!-- 第二行：数字和基本运算 -->
+                    <button class="btn number" onclick="appendNumber('7')">7</button>
+                    <button class="btn number" onclick="appendNumber('8')">8</button>
+                    <button class="btn number" onclick="appendNumber('9')">9</button>
+                    <button class="btn operator" onclick="appendOperation('÷')">÷</button>
+                    <button class="btn operator" onclick="appendOperation('(')">(</button>
+
+                    <!-- 第三行 -->
+                    <button class="btn number" onclick="appendNumber('4')">4</button>
+                    <button class="btn number" onclick="appendNumber('5')">5</button>
+                    <button class="btn number" onclick="appendNumber('6')">6</button>
+                    <button class="btn operator" onclick="appendOperation('×')">×</button>
+                    <button class="btn operator" onclick="appendOperation(')')">)</button>
+
+                    <!-- 第四行 -->
+                    <button class="btn number" onclick="appendNumber('1')">1</button>
+                    <button class="btn number" onclick="appendNumber('2')">2</button>
+                    <button class="btn number" onclick="appendNumber('3')">3</button>
+                    <button class="btn operator" onclick="appendOperation('-')">-</button>
+                    <button class="btn operator" onclick="appendOperation('.')">.</button>
+
+                    <!-- 第五行 -->
+                    <button class="btn number zero" onclick="appendNumber('0')">0</button>
+                    <button class="btn equals" onclick="calculate()">=</button>
+                    <button class="btn operator" onclick="appendOperation('+')">+</button>
+                    <button class="btn backspace" onclick="backspace()"><i class="fas fa-backspace"></i></button>
+                </div>
+
+                <!-- 状态指示器 -->
+                <div class="status">
+                    <div class="status-item">
+                        <span class="status-dot active"></span>
+                        <span>后端连接: <span id="connectionStatus">等待连接...</span></span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-dot"></span>
+                        <span>输入模式: <span id="inputMode">标准</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> 使用说明</h3>
+                <ul>
+                    <li>点击数字按钮输入数字</li>
+                    <li>点击运算符按钮进行运算</li>
+                    <li><strong>x²</strong>: 平方运算</li>
+                    <li><strong>√</strong>: 开方运算</li>
+                    <li><strong>%</strong>: 取余运算</li>
+                    <li><strong>C</strong>: 清除所有</li>
+                    <li><strong>CE</strong>: 清除当前输入</li>
+                    <li>点击 <strong>=</strong> 计算结果</li>
+                </ul>
+                <div class="note">
+                    <i class="fas fa-lightbulb"></i> 提示: 支持整数和小数运算，表达式和结果会实时显示
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>© 2024 科学计算器 | 前端: HTML/CSS/JS | 后端: Python Flask</p>
+        </footer>
     </div>
 
-    <!-- History -->
-    <div class="history">
-      <div class="history-title">历史记录</div>
-      <div id="historyList">
-        <div class="history-item" style="opacity:0.4;font-size:12px;">暂无记录</div>
-      </div>
-    </div>
-
-    <!-- Buttons -->
-    <div class="buttons">
-      <!-- Row 1 -->
-      <button class="btn btn-clear" data-action="clear">AC</button>
-      <button class="btn btn-function" data-action="backspace">⌫</button>
-      <button class="btn btn-function" data-action="sqrt" data-value="sqrt(">√</button>
-      <button class="btn btn-operator" data-action="operator" data-value="/">÷</button>
-
-      <!-- Row 2 -->
-      <button class="btn btn-number" data-action="number" data-value="7">7</button>
-      <button class="btn btn-number" data-action="number" data-value="8">8</button>
-      <button class="btn btn-number" data-action="number" data-value="9">9</button>
-      <button class="btn btn-operator" data-action="operator" data-value="*">×</button>
-
-      <!-- Row 3 -->
-      <button class="btn btn-number" data-action="number" data-value="4">4</button>
-      <button class="btn btn-number" data-action="number" data-value="5">5</button>
-      <button class="btn btn-number" data-action="number" data-value="6">6</button>
-      <button class="btn btn-operator" data-action="operator" data-value="-">−</button>
-
-      <!-- Row 4 -->
-      <button class="btn btn-number" data-action="number" data-value="1">1</button>
-      <button class="btn btn-number" data-action="number" data-value="2">2</button>
-      <button class="btn btn-number" data-action="number" data-value="3">3</button>
-      <button class="btn btn-operator" data-action="operator" data-value="+">+</button>
-
-      <!-- Row 5 -->
-      <button class="btn btn-function" data-action="operator" data-value="%">%</button>
-      <button class="btn btn-number" data-action="number" data-value="0">0</button>
-      <button class="btn btn-number" data-action="decimal">.</button>
-      <button class="btn btn-equals" data-action="equals">=</button>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

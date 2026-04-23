@@ -27,7 +27,7 @@ from deepagents.backends import CompositeBackend, LocalShellBackend
 from deepagents.middleware.subagents import _EXCLUDED_STATE_KEYS
 from langchain_deepseek import ChatDeepSeek
 from langchain.agents.middleware.types import wrap_tool_call
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 from langgraph.checkpoint.memory import MemorySaver
 
 _DEPLOY_ROOT = Path(__file__).resolve().parent
@@ -102,6 +102,59 @@ _JMC_TEST_SUBAGENT = {
 }
 
 
+def _block_long_running_execute_middleware():
+    """Prevent `execute` from starting obvious long-running dev servers (hangs the agent)."""
+
+    _BLOCK_HINTS = (
+        "http.server",
+        "httpserver",
+        "flask run",
+        "uvicorn",
+        "hypercorn",
+        "daphne",
+        "gunicorn",
+        "webpack serve",
+        "vite",
+        "next dev",
+        "nuxt dev",
+        "server.py",
+    )
+
+    @wrap_tool_call(name="BlockLongRunningExecuteMiddleware")
+    def _guard(request, handler):
+        tc = getattr(request, "tool_call", None) or {}
+        if tc.get("name") != "execute":
+            return handler(request)
+
+        args = tc.get("args", {}) or {}
+        cmd = args.get("command", "") if isinstance(args, dict) else ""
+        if not isinstance(cmd, str):
+            return handler(request)
+
+        lowered = cmd.lower()
+        if any(h in lowered for h in _BLOCK_HINTS):
+            tid = tc.get("id")
+            if not tid:
+                return (
+                    "Refused: this command looks like a long-running web/dev server. "
+                    "Do not run it via execute (it blocks the agent). "
+                    "Tell the user to run it in their own terminal, or open index.html directly."
+                )
+            return ToolMessage(
+                content=(
+                    "Refused: this command looks like a long-running web/dev server. "
+                    "Do not run it via execute (it blocks the agent). "
+                    "Tell the user to run it in their own terminal, or open index.html directly."
+                ),
+                tool_call_id=tid,
+                status="error",
+            )
+
+        return handler(request)
+
+    return _guard
+
+
 def _debug_task_state_middleware():
     """Log tool calls; for `task`, also log subagent state."""
 
@@ -173,6 +226,9 @@ def _build_system_prompt() -> str:
         "\n\n## Local runtime notes\n\n"
         "- File tools use a virtual path rooted at `deploy-coding-agent/workspace/`. Bundled skills are under `/skills/`.\n"
         "- `execute()` runs in the workspace directory on your machine (not a cloud sandbox).\n"
+        "- Do **not** use `execute()` to start long-running dev servers (e.g. `python -m http.server`, `python server.py`, "
+        "`flask run`, `uvicorn`, `vite`). Those processes block the agent loop; instead tell the user the exact command "
+        "to run locally, or open `index.html` directly.\n"
         f"- For the code-review lint helper, call Python with the real path: "
         f'`python "{lint}" .` (virtual `/skills/...` paths may not work in shell).\n'
     )
@@ -264,7 +320,7 @@ def build_local_agent():
         memory=AGENT_MEMORY_PATHS,
         skills=["/skills/"],
         subagents=[_RESEARCHER_SUBAGENT, _JMC_TEST_SUBAGENT],
-        middleware=[_debug_task_state_middleware()],
+        middleware=[_block_long_running_execute_middleware(), _debug_task_state_middleware()],
         backend=_backend_factory(),
         name="deepagents-deploy-coding-agent-local",
         checkpointer=MemorySaver(),
